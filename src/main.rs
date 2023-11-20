@@ -5,6 +5,7 @@ const MAX_HEIGHT: usize = 99;
 const MAX_WIDTH: usize = 99;
 
 fn main() {
+    println!("Welcome to rusty mine sweeper by Nathan Moes! Please note that all mine MUST be marked as flagged in order to win the game");
     let (width, height) = match get_params() {
         Ok((w, h)) => (w, h),
         Err(_) => {
@@ -32,10 +33,19 @@ fn main() {
     //         }
     //     }
     // }
-    let mut board: Board<isize> = Board::isize_board(width, height);
+    let mut score = 0;
+    let mut board: Board<BoardSquare> = Board::isize_board(width, height);
     board.place_mines();
     println!("{}", board);
     loop {
+        match board.is_won() {
+            Some(_) => {
+                println!("You win");
+                break;
+            }
+            None => {
+            }
+        }
         match get_mark_square() {
             Ok(x) => {
                 if x == "y" {
@@ -46,6 +56,7 @@ fn main() {
                         }
                     }
                     println!("board after your mark\n{}", board);
+                    continue;
                 }
             }
             Err(_) => {
@@ -55,6 +66,7 @@ fn main() {
         }
         match board.make_move() {
             Ok(_) => {
+                score += 1;
                 println!("board after your move\n{}", board);
                 continue;
             },
@@ -68,6 +80,7 @@ fn main() {
             }
         }
     }
+    println!("Your score is {}", score);
 }
 
 fn get_params() -> Result<(usize, usize), &'static str> {

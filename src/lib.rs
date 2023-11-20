@@ -3,15 +3,17 @@ use std::fmt;
 use std::marker::PhantomData;
 use rand::Rng;
 
+#[derive(Clone, PartialEq)]
 enum CellState {
     Hidden,
     Revealed,
     Flagged,
 }
-
+#[derive(Clone)]
 pub struct BoardSquare {
     state: CellState,
     value: isize,
+    is_mine: bool,
 }
 
 #[derive(Debug)]
@@ -164,17 +166,17 @@ where
     }
 }
 
-impl Board<isize> {
+impl Board<BoardSquare> {
     /// Creates a Board of type isize with default values of -1
     /// # Examples
     /// ```
     /// use chomp::Board;
     /// let mut board: Board<isize> = Board::isize_board(5, 4);
     /// ```
-    pub fn isize_board(width: usize, height: usize) -> Board<isize> {
+    pub fn isize_board(width: usize, height: usize) -> Board<BoardSquare> {
         let mut board = Vec::with_capacity(height);
         for _ in 0..height {
-            let row = vec![-1; width];
+            let row = vec![BoardSquare{value: -1, state: CellState::Hidden, is_mine: false}; width];
             board.push(row);
         }
         Board {
@@ -199,8 +201,8 @@ impl Board<isize> {
                 let y = rng.gen_range(0..self.height);
 
                 // Place a mine if the cell is not already a mine
-                if self.board[y][x] != -10 {
-                    self.board[y][x] = -10;
+                if !self.board[y][x].is_mine {
+                    self.board[y][x].is_mine = true;
                     placed = true;
                 }
             }
@@ -215,7 +217,7 @@ impl Board<isize> {
                 if x_index >= self.width || y_index >= self.height {
                     continue;
                 }
-                if self.board[y_index][x_index] == -10 {
+                if self.board[y_index][x_index].is_mine {
                     count += 1;
                 }
             }
@@ -225,7 +227,8 @@ impl Board<isize> {
 
     fn update_board(&mut self, x: usize, y: usize) {
         // First, update the clicked square itself
-        self.board[y][x] = self.check_square(x, y);
+        self.board[y][x].value = self.check_square(x, y);
+        self.board[y][x].state = CellState::Revealed;
     
         // Then, update each of the eight surrounding squares
         for y_index in y.saturating_sub(1)..=y + 1 {
@@ -234,9 +237,9 @@ impl Board<isize> {
                 if x_index == x && y_index == y {
                     continue;
                 }
-                if x_index < self.width && y_index < self.height {
+                if x_index < self.width && y_index < self.height && x == x_index && y_index == y {
                     // Update each surrounding square
-                    self.board[y_index][x_index] = self.check_square(x_index, y_index);
+                    self.board[y_index][x_index].value = self.check_square(x_index, y_index);
                 }
             }
         }
@@ -249,7 +252,7 @@ impl Board<isize> {
         while !move_made {
             match handle_input(self.width, self.height) {
                 Ok((row_index, col_index)) => {
-                    if self.board[row_index][col_index] == -10 {
+                    if self.board[row_index][col_index].is_mine {
                         return Err("You lose");
                     }
                     self.update_board(col_index, row_index);
@@ -269,8 +272,8 @@ impl Board<isize> {
         while !move_made {
             match handle_input(self.width, self.height) {
                 Ok((row_index, col_index)) => {
-                    if self.board[row_index][col_index] == -1 {
-                        self.board[row_index][col_index] = 10;
+                    if self.board[row_index][col_index].state == CellState::Hidden {
+                        self.board[row_index][col_index].state = CellState::Flagged;
                         move_made = true;
                     } else {
                         println!("Invalid position selection. Please select a non selected square to mark");
@@ -285,236 +288,12 @@ impl Board<isize> {
         }
         Ok(())
     }
-}
 
-impl Board<bool> {
-    /// Creates a Board of type bool with default values of true
-    /// # Examples
-    /// ```
-    /// use chomp::Board;
-    /// let mut board: Board<bool> = Board::boolean_board(5, 4);
-    /// ```
-    pub fn boolean_board(width: usize, height: usize) -> Board<bool> {
-        let mut board = Vec::with_capacity(height);
-        for _ in 0..height {
-            let row = vec![true; width];
-            board.push(row);
-        }
-        Board {
-            board,
-            width,
-            height,
-            _marker: PhantomData,
-        }
-    }
-
-    /// Determines if the state of the board is lost for the game of chomp
-    pub fn is_lost(&self) -> bool {
-        for (y, row) in self.board.iter().enumerate() {
-            for (x, &square) in row.iter().enumerate() {
-                if square && (x > 0 || y > 0) {
-                    return false;
-                }
-            }
-        }
-        self.board[0][0]
-    }
-
-    /// Determines if there is a winning move for the AI to take.
-    /// If there is, returns Some(x,y). Else None
-    pub fn winning_move(posn: Board<bool>) -> Option<(usize, usize)> {
-        if posn.is_lost() {
-            return None;
-        }
-        for row in 0..posn.height {
-            for col in 0..posn.width {
-                if row == 0 && col == 0 || !posn.board[row][col] {
-                    continue;
-                }
-                let mut p = posn.clone();
-                p.chomp(col, row);
-                let the_move = Self::winning_move(p);
-                if the_move.is_none() {
-                    return Some((col, row));
-                }
-            }
-        }
-        None
-    }
-
-    /// "Chomps" the board with the given cords given. Returns true if successful, else false.
-    /// Chomp means to mark false elements to the right and below the given cord, including the cord
-    /// # Examples
-    /// ```
-    /// // Chomp top left
-    /// use chomp::Board;
-    /// let mut board: Board<bool> = Board::boolean_board(5, 5);
-    ///
-    /// board.chomp(0, 0);
-    ///
-    /// for y in 0..5 {
-    ///    assert_eq!(
-    ///        *board.get(0, y).unwrap(),
-    ///        false,
-    ///        "Board value at ({}, {}) should be false after chomp",
-    ///        2,
-    ///         y
-    ///    );
-    /// }
-    ///
-    /// for x in 0..5 {
-    ///    assert_eq!(
-    ///        *board.get(x, 0).unwrap(),
-    ///        false,
-    ///        "Board value at ({}, {}) should be false after chomp",
-    ///        x,
-    ///        0
-    ///    );
-    /// }
-    ///
-    /// for x in 1..5 {
-    ///    assert_eq!(
-    ///        *board.get(x, 1).unwrap(),
-    ///        true,
-    ///        "Board value at ({}, {}) should be true after chomp",
-    ///        x,
-    ///        1
-    ///    );
-    /// }
-    /// ```
-    /// ```
-    /// use chomp::Board;
-    /// // Chomp bottom right
-    /// let mut board: Board<bool> = Board::boolean_board(5, 5);
-    ///
-    /// board.chomp(4, 4);
-    ///
-    /// assert_eq!(
-    ///     *board.get(4, 4).unwrap(),
-    ///     false,
-    ///     "Board at (4, 4) should be false after chomp"
-    /// );
-    ///
-    /// for x in 0..4 {
-    ///     assert_eq!(
-    ///         *board.get(x, 0).unwrap(),
-    ///         true,
-    ///         "Board value at ({}, {}) should be false after chomp",
-    ///         x,
-    ///         0
-    ///     );
-    /// }
-    ///
-    /// for y in 0..4 {
-    ///     assert_eq!(
-    ///         *board.get(0, y).unwrap(),
-    ///         true,
-    ///         "Board value at ({}, {}) should be false after chomp ",
-    ///         0,
-    ///         y
-    ///     );
-    /// }
-    /// ```
-    pub fn chomp(&mut self, x: usize, y: usize) -> bool {
-        if x >= self.width || y >= self.height {
-            return false;
-        }
-        for (y_index, row) in self.board.iter_mut().enumerate() {
-            for (x_index, element) in row.iter_mut().enumerate() {
-                if (y_index >= y && x_index == x) || (y_index == y && x_index >= x) {
-                    *element = false;
-                }
-            }
-        }
-        true
-    }
-
-    /// Gets input from the user and makes the given move
-    pub fn make_move(&mut self) {
-        let mut move_made = false;
-        while !move_made {
-            match handle_input(self.width, self.height) {
-                Ok((row_index, col_index)) => {
-                    if !self.board[row_index][col_index] {
-                        println!("Invalid position selection. Position is not playable");
-                        continue;
-                    }
-                    self.chomp(col_index, row_index);
-                    move_made = true;
-                }
-                Err(e) => {
-                    println!("{}", e);
-                    continue;
-                }
-            }
-        }
-    }
-
-    /// finds the smallest chompable square and returns if it there is Some value, else None
-    fn find_smallest_chomp(&self) -> Option<(usize, usize)> {
-        let mut best_chomp = None;
-        let mut min_affected = usize::MAX;
-
-        for (y, row) in self.board.iter().enumerate() {
-            for (x, &square) in row.iter().enumerate() {
-                if square {
-                    let affected = self.count_affected_squares(x, y);
-                    if affected < min_affected {
-                        min_affected = affected;
-                        best_chomp = Some((x, y));
-                    }
-                }
-            }
-        }
-        best_chomp
-    }
-
-    /// counts the number of affected squares if the cords were chomped
-    fn count_affected_squares(&self, x: usize, y: usize) -> usize {
-        let mut count = 0;
-        for (y_index, row) in self.board.iter().skip(y).enumerate() {
-            for (x_index, &square) in row.iter().enumerate() {
-                if square && ((x_index >= x && y_index == y) || (y_index >= y && x_index == x)) {
-                    count += 1;
-                }
-            }
-        }
-        count
-    }
-
-    /// Makes the AI calculate and make a move
-    /// Returns an option if it was successful or None if it has lost
-    pub fn ai_make_move(&mut self) -> Option<()> {
-        let mut move_made = false;
-        while !move_made {
-            match Self::winning_move(self.clone()) {
-                Some((row_index, col_index)) => {
-                    if !self.chomp(col_index, row_index) {
-                        continue;
-                    }
-                    let row_label = (b'a' + row_index as u8) as char;
-                    move_made = true;
-                    println!("AI made move at (row:{}, col:{})", row_label, col_index + 1);
-                }
-                None => {
-                    println!("No winning move present");
-                    if self.is_lost() {
-                        println!("AI lost, game is lost");
-                        return None;
-                    } else {
-                        match self.find_smallest_chomp() {
-                            Some((x, y)) => {
-                                self.chomp(x, y);
-                                let row_label = (b'a' + y as u8) as char;
-                                println!("AI made move at (y:{}, x:{})", row_label, x + 1);
-                                move_made = true;
-                            }
-                            None => {
-                                println!("AI lost, AI is dummy dummy");
-                                return None;
-                            }
-                        };
-                    }
+    pub fn is_won(&self) -> Option<()> {
+        for row in self.board.iter() {
+            for square in row.iter() {
+                if square.state != CellState::Flagged && square.is_mine {
+                    return None;
                 }
             }
         }
@@ -527,10 +306,7 @@ const MARKED_SQUARE: char = '\u{1F6A9}';
 
 /// Implementation for fmt::Display for the board
 /// displays the given value for the item in each cord with 0..width and 0..height numbers and letters respectively
-impl<T> fmt::Display for Board<T>
-where
-    T: fmt::Display + Clone + Default + 'static,
-{
+impl fmt::Display for Board<BoardSquare> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, " ")?;
         for i in 0..self.board[0].len() {
@@ -546,23 +322,30 @@ where
             let row_label = (b'a' + i as u8) as char;
             write!(f, "{} ", row_label)?;
 
-            for (j, val) in row.iter().enumerate() {
+            for (j, square) in row.iter().enumerate() {
                 if j > 0 {
                     write!(f, " | ")?;
                 }
 
-                if std::any::TypeId::of::<T>() == std::any::TypeId::of::<isize>() {
-                    // Safely cast val to isize
-                    let isize_val = unsafe { *(val as *const T as *const isize) };
-                    if isize_val == -1 || isize_val == -10 {
-                        write!(f, "{}", EMPTY_SQUARE)?;
-                    } else if isize_val == 10 {
-                        write!(f, "{}", MARKED_SQUARE)?;
-                    } else {
-                        write!(f, "{}", isize_val)?;
-                    }
-                } else {
-                    write!(f, "{}", val)?;
+                // Display logic based on the state and value of BoardSquare
+                match square.state {
+                    CellState::Hidden => {
+                        if square.value != -1 {
+                            write!(f, "{}", square.value)?
+                        } else {
+                            write!(f, "{}", EMPTY_SQUARE)?
+                        }
+                    },
+                    CellState::Revealed => {
+                        if square.is_mine {
+                            write!(f, "{}", "*")?;
+                        } else {
+                            write!(f, "{}", square.value)?;
+                        }
+                    },
+                    CellState::Flagged => {
+                        write!(f, "{}", MARKED_SQUARE)?
+                    },
                 }
             }
             writeln!(f, " |")?;
@@ -570,6 +353,7 @@ where
         Ok(())
     }
 }
+
 
 /// helper function to handle input from the user to be used for making a move
 fn handle_input(max_width: usize, max_height: usize) -> Result<(usize, usize), &'static str> {
@@ -591,45 +375,4 @@ fn handle_input(max_width: usize, max_height: usize) -> Result<(usize, usize), &
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn board_can_be_set_with_all_bool_correct() {
-        let width = 4;
-        let height = 3;
-        let mut board: Board<bool> = Board::boolean_board(width, height);
-
-        assert!(board.get(0, 0) == Some(&true));
-        assert!(board.get(1, 1) == Some(&true));
-        assert!(board.get(2, 2) == Some(&true));
-    }
-
-    #[test]
-    fn test_chomp_out_of_bounds() {
-        let mut board: Board<bool> = Board::boolean_board(5, 5);
-
-        assert!(board.chomp(5, 5) == false);
-
-        for x in 0..5 {
-            for y in 0..5 {
-                assert_eq!(
-                    *board.get(x, y).unwrap(),
-                    true,
-                    "Board value at ({}, {}) should be true after chomp",
-                    x,
-                    y
-                );
-            }
-        }
-    }
-
-    #[test]
-    fn test_get_some_move_for_winning_move() {
-        let board: Board<bool> = Board::boolean_board(5, 5);
-
-        let posn = board.clone();
-
-        let winning_move = Board::winning_move(posn);
-
-        assert!(winning_move.is_some());
-    }
 }
