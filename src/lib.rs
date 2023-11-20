@@ -3,6 +3,17 @@ use std::fmt;
 use std::marker::PhantomData;
 use rand::Rng;
 
+enum CellState {
+    Hidden,
+    Revealed,
+    Flagged,
+}
+
+pub struct BoardSquare {
+    state: CellState,
+    value: isize,
+}
+
 #[derive(Debug)]
 /// Board object for any arbitrary type
 /// Values for the board itself and width + height properties for it's limits
