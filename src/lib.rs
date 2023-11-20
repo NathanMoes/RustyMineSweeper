@@ -1,5 +1,7 @@
 use prompted::*;
 use std::fmt;
+use std::marker::PhantomData;
+use rand::Rng;
 
 #[derive(Debug)]
 /// Board object for any arbitrary type
@@ -8,6 +10,7 @@ pub struct Board<T> {
     board: Vec<Vec<T>>,
     pub width: usize,
     pub height: usize,
+    _marker: PhantomData<T>,
 }
 
 /// Clone implementation for board of arbitrary type.
@@ -22,6 +25,7 @@ impl<T: Clone> Clone for Board<T> {
             board,
             width: self.width,
             height: self.height,
+            _marker: PhantomData,
         }
     }
 }
@@ -32,6 +36,7 @@ impl<T> Default for Board<T> {
             board: Vec::new(),
             width: 5,
             height: 4,
+            _marker: PhantomData,
         }
     }
 }
@@ -80,6 +85,7 @@ where
             board,
             width,
             height,
+            _marker: PhantomData,
         }
     }
 
@@ -147,6 +153,129 @@ where
     }
 }
 
+impl Board<isize> {
+    /// Creates a Board of type isize with default values of -1
+    /// # Examples
+    /// ```
+    /// use chomp::Board;
+    /// let mut board: Board<isize> = Board::isize_board(5, 4);
+    /// ```
+    pub fn isize_board(width: usize, height: usize) -> Board<isize> {
+        let mut board = Vec::with_capacity(height);
+        for _ in 0..height {
+            let row = vec![-1; width];
+            board.push(row);
+        }
+        Board {
+            board,
+            width,
+            height,
+            _marker: PhantomData,
+        }
+    }
+
+    /// Randomly places mines (~10% of the squares) on the board
+    pub fn place_mines(&mut self) {
+        let total_squares = self.width * self.height;
+        let mines_count = total_squares / 10; // Approximately 10% of total squares
+
+        let mut rng = rand::thread_rng();
+
+        for _ in 0..mines_count {
+            let mut placed = false;
+            while !placed {
+                let x = rng.gen_range(0..self.width);
+                let y = rng.gen_range(0..self.height);
+
+                // Place a mine if the cell is not already a mine
+                if self.board[y][x] != -10 {
+                    self.board[y][x] = -10;
+                    placed = true;
+                }
+            }
+        }
+    }
+
+    // Checks any given square for the number of bombs around it aka the number -10 and will assign itself a given number reflecting that
+    fn check_square(&self, x: usize, y: usize) -> isize {
+        let mut count = 0;
+        for y_index in y.saturating_sub(1)..=y + 1 {
+            for x_index in x.saturating_sub(1)..=x + 1 {
+                if x_index >= self.width || y_index >= self.height {
+                    continue;
+                }
+                if self.board[y_index][x_index] == -10 {
+                    count += 1;
+                }
+            }
+        }
+        count
+    }
+
+    fn update_board(&mut self, x: usize, y: usize) {
+        // First, update the clicked square itself
+        self.board[y][x] = self.check_square(x, y);
+    
+        // Then, update each of the eight surrounding squares
+        for y_index in y.saturating_sub(1)..=y + 1 {
+            for x_index in x.saturating_sub(1)..=x + 1 {
+                // Skip the clicked square itself, as it's already updated
+                if x_index == x && y_index == y {
+                    continue;
+                }
+                if x_index < self.width && y_index < self.height {
+                    // Update each surrounding square
+                    self.board[y_index][x_index] = self.check_square(x_index, y_index);
+                }
+            }
+        }
+    }
+    
+
+    /// Gets input from the user and makes the given move
+    pub fn make_move(&mut self) -> Result<(usize, usize), &'static str> {
+        let mut move_made = false;
+        while !move_made {
+            match handle_input(self.width, self.height) {
+                Ok((row_index, col_index)) => {
+                    if self.board[row_index][col_index] == -10 {
+                        return Err("You lose");
+                    }
+                    self.update_board(col_index, row_index);
+                    move_made = true;
+                }
+                Err(e) => {
+                    println!("{}", e);
+                    continue;
+                }
+            }
+        }
+        Ok((0, 0))
+    }
+
+    pub fn mark_square(&mut self) -> Result<(), &'static str> {
+        let mut move_made = false;
+        while !move_made {
+            match handle_input(self.width, self.height) {
+                Ok((row_index, col_index)) => {
+                    if self.board[row_index][col_index] == -1 {
+                        self.board[row_index][col_index] = 10;
+                        move_made = true;
+                    } else {
+                        println!("Invalid position selection. Please select a non selected square to mark");
+                        continue;
+                    }
+                }
+                Err(e) => {
+                    println!("{}", e);
+                    continue;
+                }
+            }
+        }
+        Ok(())
+    }
+}
+
 impl Board<bool> {
     /// Creates a Board of type bool with default values of true
     /// # Examples
@@ -164,6 +293,7 @@ impl Board<bool> {
             board,
             width,
             height,
+            _marker: PhantomData,
         }
     }
 
@@ -381,13 +511,15 @@ impl Board<bool> {
     }
 }
 
+const EMPTY_SQUARE: char = '\u{25FB}';
+const MARKED_SQUARE: char = '\u{1F6A9}';
+
 /// Implementation for fmt::Display for the board
 /// displays the given value for the item in each cord with 0..width and 0..height numbers and letters respectively
 impl<T> fmt::Display for Board<T>
 where
     T: fmt::Display + Clone + Default + 'static,
 {
-    /// display function, x = numbers, y = letters
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, " ")?;
         for i in 0..self.board[0].len() {
@@ -407,10 +539,17 @@ where
                 if j > 0 {
                     write!(f, " | ")?;
                 }
-                // Check if T is a bool and format accordingly
-                if std::any::TypeId::of::<T>() == std::any::TypeId::of::<bool>() {
-                    let bool_val = val as *const T as *const bool;
-                    write!(f, "{}", if unsafe { *bool_val } { 1 } else { 0 })?;
+
+                if std::any::TypeId::of::<T>() == std::any::TypeId::of::<isize>() {
+                    // Safely cast val to isize
+                    let isize_val = unsafe { *(val as *const T as *const isize) };
+                    if isize_val == -1 || isize_val == -10 {
+                        write!(f, "{}", EMPTY_SQUARE)?;
+                    } else if isize_val == 10 {
+                        write!(f, "{}", MARKED_SQUARE)?;
+                    } else {
+                        write!(f, "{}", isize_val)?;
+                    }
                 } else {
                     write!(f, "{}", val)?;
                 }

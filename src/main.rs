@@ -1,5 +1,5 @@
-use rusty_mine_sweeper::*;
 use prompted::input;
+use rusty_mine_sweeper::*;
 
 const MAX_HEIGHT: usize = 99;
 const MAX_WIDTH: usize = 99;
@@ -14,21 +14,57 @@ fn main() {
             return;
         }
     };
-    let mut board: Board<bool> = Board::boolean_board(width, height);
+    // let mut board: Board<bool> = Board::boolean_board(width, height);
+    // println!("{}", board);
+    // loop {
+    //     if board.is_lost() {
+    //         break;
+    //     }
+    //     board.make_move();
+    //     println!("board after your move\n{}", board);
+    //     match board.ai_make_move() {
+    //         Some(()) => {
+    //             println!("board after ai move\n{}", board);
+    //             continue;
+    //         }
+    //         None => {
+    //             break;
+    //         }
+    //     }
+    // }
+    let mut board: Board<isize> = Board::isize_board(width, height);
+    board.place_mines();
     println!("{}", board);
     loop {
-        if board.is_lost() {
-            break;
-        }
-        board.make_move();
-        println!("board after your move\n{}", board);
-        match board.ai_make_move() {
-            Some(()) => {
-                println!("board after ai move\n{}", board);
+        match get_mark_square() {
+            Ok(x) => {
+                if x == "y" {
+                    match board.mark_square() {
+                        Ok(_) => {
+                        }
+                        Err(_) => {
+                        }
+                    }
+                    println!("board after your mark\n{}", board);
+                }
+            }
+            Err(_) => {
+                println!("invalid move");
                 continue;
             }
-            None => {
-                break;
+        }
+        match board.make_move() {
+            Ok(_) => {
+                println!("board after your move\n{}", board);
+                continue;
+            },
+            Err(x) => {
+                if x == "You lose" {
+                    println!("You lose");
+                    break;
+                }
+                println!("invalid move");
+                continue;
             }
         }
     }
@@ -61,4 +97,20 @@ fn get_params() -> Result<(usize, usize), &'static str> {
         x => x,
     };
     Ok((width, height))
+}
+
+fn get_mark_square() -> Result<&'static str, &'static str> {
+    loop {
+        let yes_or_no = input!("Would you like to mark a square?\n");
+        match yes_or_no.trim().to_lowercase().as_str() {
+            "yes" | "y" => {
+                return Ok("y");
+            }
+            "no" | "n" => return Ok("n"),
+            _ => {
+                println!("Please enter yes or no");
+                continue;
+            }
+        }
+    }
 }
