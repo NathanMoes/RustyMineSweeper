@@ -19,16 +19,16 @@ pub struct BoardSquare {
 #[derive(Debug)]
 /// Board object for any arbitrary type
 /// Values for the board itself and width + height properties for it's limits
-pub struct Board<T> {
-    board: Vec<Vec<T>>,
+pub struct Board<BoardSquare> {
+    board: Vec<Vec<BoardSquare>>,
     pub width: usize,
     pub height: usize,
-    _marker: PhantomData<T>,
+    _marker: PhantomData<BoardSquare>,
 }
 
 /// Clone implementation for board of arbitrary type.
 /// Essentially it just clones the vec and cop
-impl<T: Clone> Clone for Board<T> {
+impl<BoardSquare: Clone> Clone for Board<BoardSquare> {
     fn clone(&self) -> Self {
         let mut board = Vec::with_capacity(self.height);
         for row in self.board.iter() {
@@ -43,28 +43,28 @@ impl<T: Clone> Clone for Board<T> {
     }
 }
 
-impl<T> Default for Board<T> {
+impl<BoardSquare> Default for Board<BoardSquare> {
     fn default() -> Self {
         Board {
             board: Vec::new(),
             width: 5,
-            height: 4,
+            height: 5,
             _marker: PhantomData,
         }
     }
 }
 
 /// Default implementation for the Board. Including basic features
-impl<T> Board<T>
+impl<BoardSquare> Board<BoardSquare>
 where
-    T: Clone + Default + std::cmp::PartialEq,
+BoardSquare: Clone + Default + std::cmp::PartialEq,
 {
     /// Creates a new Board object with given width and height dimensions with default values for the type
     /// # Examples
     ///
     /// ```
     /// // create i32 Board
-    /// use chomp::Board;
+    /// use rusty_mine_sweeper::Board;
     /// let width = 4;
     /// let height = 3;
     /// let board: Board<i32> = Board::new(width, height);
@@ -77,7 +77,7 @@ where
     /// ```
     /// ```
     /// // creates board with correct dimensions
-    /// use chomp::Board;
+    /// use rusty_mine_sweeper::Board;
     /// let width = 4;
     /// let height = 3;
     /// let board: Board<i32> = Board::new(width, height);
@@ -85,12 +85,12 @@ where
     /// assert_eq!(board.width, width);
     /// assert_eq!(board.height, height);
     /// ```
-    pub fn new(width: usize, height: usize) -> Board<T> {
+    pub fn new(width: usize, height: usize) -> Board<BoardSquare> {
         let mut board = Vec::with_capacity(height);
         for _ in 0..height {
             let mut row = Vec::with_capacity(width);
             for _ in 0..width {
-                row.push(T::default());
+                row.push(BoardSquare::default());
             }
             board.push(row);
         }
@@ -106,7 +106,7 @@ where
     /// Returns an option with Some(&) for valid value in bounds else None
     /// # Examples
     /// ```
-    /// use chomp::Board;
+    /// use rusty_mine_sweeper::Board;
     /// let width = 4;
     /// let height = 3;
     /// let board: Board<i32> = Board::new(width, height);
@@ -115,14 +115,14 @@ where
     /// assert!(board.get(width + 1, 0).is_none());
     /// assert!(board.get(0, height + 1).is_none());
     /// ```
-    pub fn get(&self, x: usize, y: usize) -> Option<&T> {
+    pub fn get(&self, x: usize, y: usize) -> Option<&BoardSquare> {
         self.board.get(y).and_then(|row| row.get(x))
     }
 
     /// Sets the value for a given index to the value passed in on the board
     /// # Examples
     /// ```
-    /// use chomp::Board;
+    /// use rusty_mine_sweeper::Board;
     /// let width = 4;
     /// let height = 3;
     /// let mut value = 1;
@@ -137,7 +137,7 @@ where
     /// board.set(1, 1, value);
     /// assert!(board.get(1, 1) == Some(&value));
     /// ```
-    pub fn set(&mut self, x: usize, y: usize, value: T) {
+    pub fn set(&mut self, x: usize, y: usize, value: BoardSquare) {
         if y < self.height && x < self.width {
             self.board[y][x] = value;
         }
@@ -146,7 +146,7 @@ where
     /// Creates a Iterator that gives a mutable reference to the values on the board
     /// # Examples
     /// ```
-    /// use chomp::Board;
+    /// use rusty_mine_sweeper::Board;
     /// let width = 4;
     /// let height = 3;
     /// let mut board: Board<isize> = Board::new(width, height);
@@ -161,7 +161,7 @@ where
     ///     }
     /// }
     /// ```
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Vec<T>> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Vec<BoardSquare>> {
         self.board.iter_mut()
     }
 }
@@ -170,8 +170,9 @@ impl Board<BoardSquare> {
     /// Creates a Board of type isize with default values of -1
     /// # Examples
     /// ```
-    /// use chomp::Board;
-    /// let mut board: Board<isize> = Board::isize_board(5, 4);
+    /// use rusty_mine_sweeper::Board;
+    /// use rusty_mine_sweeper::BoardSquare;
+    /// let mut board: Board<BoardSquare> = Board::isize_board(5, 4);
     /// ```
     pub fn isize_board(width: usize, height: usize) -> Board<BoardSquare> {
         let mut board = Vec::with_capacity(height);

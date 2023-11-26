@@ -5,7 +5,7 @@ const MAX_HEIGHT: usize = 99;
 const MAX_WIDTH: usize = 99;
 
 fn main() {
-    println!("Welcome to rusty mine sweeper by Nathan Moes! Please note that all mine MUST be marked as flagged in order to win the game");
+    println!("Welcome to rusty mine sweeper by Nathan Moes! Please note that all mines MUST be marked as flagged in order to win the game");
     let width: usize;
     let height: usize;
     loop {
@@ -29,6 +29,12 @@ fn main() {
         match get_mark_square() {
             Ok(x) => {
                 if x == "y" {
+                    loop {
+                        if board.mark_square().is_err() {
+                            continue;
+                        }
+                        break;
+                    }
                     println!("board after your mark\n{}", board);
                     continue;
                 }
