@@ -1,7 +1,7 @@
 use prompted::*;
+use rand::Rng;
 use std::fmt;
 use std::marker::PhantomData;
-use rand::Rng;
 
 #[derive(Clone, PartialEq)]
 enum CellState {
@@ -176,7 +176,14 @@ impl Board<BoardSquare> {
     pub fn isize_board(width: usize, height: usize) -> Board<BoardSquare> {
         let mut board = Vec::with_capacity(height);
         for _ in 0..height {
-            let row = vec![BoardSquare{value: -1, state: CellState::Hidden, is_mine: false}; width];
+            let row = vec![
+                BoardSquare {
+                    value: -1,
+                    state: CellState::Hidden,
+                    is_mine: false
+                };
+                width
+            ];
             board.push(row);
         }
         Board {
@@ -229,7 +236,7 @@ impl Board<BoardSquare> {
         // First, update the clicked square itself
         self.board[y][x].value = self.check_square(x, y);
         self.board[y][x].state = CellState::Revealed;
-    
+
         // Then, update each of the eight surrounding squares
         for y_index in y.saturating_sub(1)..=y + 1 {
             for x_index in x.saturating_sub(1)..=x + 1 {
@@ -244,7 +251,6 @@ impl Board<BoardSquare> {
             }
         }
     }
-    
 
     /// Gets input from the user and makes the given move
     pub fn make_move(&mut self) -> Result<(usize, usize), &'static str> {
@@ -335,17 +341,15 @@ impl fmt::Display for Board<BoardSquare> {
                         } else {
                             write!(f, "{}", EMPTY_SQUARE)?
                         }
-                    },
+                    }
                     CellState::Revealed => {
                         if square.is_mine {
-                            write!(f, "{}", "*")?;
+                            write!(f, "*")?;
                         } else {
                             write!(f, "{}", square.value)?;
                         }
-                    },
-                    CellState::Flagged => {
-                        write!(f, "{}", MARKED_SQUARE)?
-                    },
+                    }
+                    CellState::Flagged => write!(f, "{}", MARKED_SQUARE)?,
                 }
             }
             writeln!(f, " |")?;
@@ -354,21 +358,26 @@ impl fmt::Display for Board<BoardSquare> {
     }
 }
 
-
-/// helper function to handle input from the user to be used for making a move
+/// Helper function to handle input from the user to be used for making a move
 fn handle_input(max_width: usize, max_height: usize) -> Result<(usize, usize), &'static str> {
     let row = input!("Enter row selection (must be char): ");
-    let row_index: usize = (row.trim().bytes().next().unwrap_or(b'a') - b'a').into();
+    let row_index = match row.trim().bytes().next() {
+        Some(byte) if byte.is_ascii_lowercase() => (byte - b'a').into(),
+        _ => return Err("Invalid row selection. Please enter a character from 'a' to 'z'."),
+    };
 
     let col = input!("Enter column selection (must be num): ");
-    let col_index = col.trim().parse::<usize>().unwrap_or(1) - 1;
+    let col_index = match col.trim().parse::<usize>() {
+        Ok(num) if num > 0 => num - 1,
+        _ => return Err("Invalid column selection. Please enter a positive number."),
+    };
 
     if row_index >= max_height {
         Err("Row selected is out of bounds")
     } else if col_index >= max_width {
-        return Err("Column selected is out of bounds");
+        Err("Column selected is out of bounds")
     } else {
-        return Ok((row_index, col_index));
+        Ok((row_index, col_index))
     }
 }
 

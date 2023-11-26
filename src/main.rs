@@ -6,55 +6,29 @@ const MAX_WIDTH: usize = 99;
 
 fn main() {
     println!("Welcome to rusty mine sweeper by Nathan Moes! Please note that all mine MUST be marked as flagged in order to win the game");
-    let (width, height) = match get_params() {
-        Ok((w, h)) => (w, h),
-        Err(_) => {
-            println!(
-                "incorrect params for the board. Please try ensure proper sizing with restart"
-            );
-            return;
-        }
-    };
-    // let mut board: Board<bool> = Board::boolean_board(width, height);
-    // println!("{}", board);
-    // loop {
-    //     if board.is_lost() {
-    //         break;
-    //     }
-    //     board.make_move();
-    //     println!("board after your move\n{}", board);
-    //     match board.ai_make_move() {
-    //         Some(()) => {
-    //             println!("board after ai move\n{}", board);
-    //             continue;
-    //         }
-    //         None => {
-    //             break;
-    //         }
-    //     }
-    // }
+    let width: usize;
+    let height: usize;
+    loop {
+        (width, height) = match get_params() {
+            Ok((w, h)) => (w, h),
+            Err(_) => {
+                continue;
+            }
+        };
+        break;
+    }
     let mut score = 0;
     let mut board: Board<BoardSquare> = Board::isize_board(width, height);
     board.place_mines();
     println!("{}", board);
     loop {
-        match board.is_won() {
-            Some(_) => {
-                println!("You win");
-                break;
-            }
-            None => {
-            }
+        if board.is_won().is_some() {
+            println!("You won!");
+            break;
         }
         match get_mark_square() {
             Ok(x) => {
                 if x == "y" {
-                    match board.mark_square() {
-                        Ok(_) => {
-                        }
-                        Err(_) => {
-                        }
-                    }
                     println!("board after your mark\n{}", board);
                     continue;
                 }
@@ -69,7 +43,7 @@ fn main() {
                 score += 1;
                 println!("board after your move\n{}", board);
                 continue;
-            },
+            }
             Err(x) => {
                 if x == "You lose" {
                     println!("You lose");
@@ -85,30 +59,39 @@ fn main() {
 
 fn get_params() -> Result<(usize, usize), &'static str> {
     let width_input = input!("Enter the width you wish for the board\n");
-    let width: usize = match width_input.trim().parse::<usize>().unwrap() {
-        x if x > MAX_WIDTH => {
+    let width = match width_input.trim().parse::<usize>() {
+        Ok(x) if x > MAX_WIDTH => {
             println!("Width must be less than {}", MAX_WIDTH);
             return Err("Width too large");
         }
-        x if x < 1 => {
+        Ok(x) if x < 1 => {
             println!("Width must be greater than 0");
             return Err("Width too small");
         }
-        x => x,
+        Ok(x) => x,
+        Err(_) => {
+            println!("Invalid input for width. Please enter a valid number.");
+            return Err("Invalid width input");
+        }
     };
 
     let height_input = input!("Enter the height you wish for the board\n");
-    let height: usize = match height_input.trim().parse::<usize>().unwrap() {
-        x if x > MAX_HEIGHT => {
+    let height = match height_input.trim().parse::<usize>() {
+        Ok(x) if x > MAX_HEIGHT => {
             println!("Height must be less than {}", MAX_HEIGHT);
             return Err("Height too large");
         }
-        x if x < 1 => {
+        Ok(x) if x < 1 => {
             println!("Height must be greater than 0");
             return Err("Height too small");
         }
-        x => x,
+        Ok(x) => x,
+        Err(_) => {
+            println!("Invalid input for height. Please enter a valid number.");
+            return Err("Invalid height input");
+        }
     };
+
     Ok((width, height))
 }
 
