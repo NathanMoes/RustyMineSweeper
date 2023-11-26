@@ -4,6 +4,11 @@ use rusty_mine_sweeper::*;
 const MAX_HEIGHT: usize = 99;
 const MAX_WIDTH: usize = 99;
 
+enum UserAction {
+    Mark,
+    Select,
+}
+
 fn main() {
     println!("Welcome to rusty mine sweeper by Nathan Moes! Please note that all mines MUST be marked as flagged in order to win the game");
     let width: usize;
@@ -26,41 +31,56 @@ fn main() {
             println!("You won!");
             break;
         }
-        match get_mark_square() {
-            Ok(x) => {
-                if x == "y" {
+
+        match get_user_action() {
+            Ok(action) => match action {
+                UserAction::Mark => {
                     loop {
                         if board.mark_square().is_err() {
+                            println!("Invalid square to mark. Please try again.");
                             continue;
                         }
                         break;
                     }
-                    println!("board after your mark\n{}", board);
-                    continue;
+                    println!("Board after your mark:\n{}", board);
                 }
-            }
+                UserAction::Select => {
+                    match board.make_move() {
+                        Ok(_) => {
+                            score += 1;
+                            println!("Board after your move:\n{}", board);
+                        }
+                        Err(x) => {
+                            if x == "You lose" {
+                                println!("You lose");
+                                break;
+                            }
+                            println!("Invalid move");
+                        }
+                    }
+                }
+            },
             Err(_) => {
-                println!("invalid move");
-                continue;
-            }
-        }
-        match board.make_move() {
-            Ok(_) => {
-                score += 1;
-                println!("board after your move\n{}", board);
-                continue;
-            }
-            Err(x) => {
-                if x == "You lose" {
-                    println!("You lose");
-                    break;
-                }
-                println!("invalid move");
+                println!("Invalid choice. Please try again.");
                 continue;
             }
         }
     }
     println!("Your score is {}", score);
+}
+
+fn get_user_action() -> Result<UserAction, &'static str> {
+    loop {
+        let action = input!("What would you like to do?\n1. Mark/Flag a spot\n2. Select a spot\n");
+        match action.trim() {
+            "1" => return Ok(UserAction::Mark),
+            "2" => return Ok(UserAction::Select),
+            _ => {
+                println!("Invalid input. Please enter 1 or 2.");
+                continue;
+            }
+        }
+    }
 }
 
 fn get_params() -> Result<(usize, usize), &'static str> {
@@ -99,20 +119,4 @@ fn get_params() -> Result<(usize, usize), &'static str> {
     };
 
     Ok((width, height))
-}
-
-fn get_mark_square() -> Result<&'static str, &'static str> {
-    loop {
-        let yes_or_no = input!("Would you like to mark a square?\n");
-        match yes_or_no.trim().to_lowercase().as_str() {
-            "yes" | "y" => {
-                return Ok("y");
-            }
-            "no" | "n" => return Ok("n"),
-            _ => {
-                println!("Please enter yes or no");
-                continue;
-            }
-        }
-    }
 }
