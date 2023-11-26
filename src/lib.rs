@@ -9,6 +9,12 @@ enum CellState {
     Revealed,
     Flagged,
 }
+
+impl Default for CellState{
+    fn default() -> Self {
+        CellState::Hidden
+    }
+}
 #[derive(Clone)]
 pub struct BoardSquare {
     state: CellState,
@@ -28,7 +34,7 @@ pub struct Board<BoardSquare> {
 
 /// Clone implementation for board of arbitrary type.
 /// Essentially it just clones the vec and cop
-impl<BoardSquare: Clone> Clone for Board<BoardSquare> {
+impl Clone for Board<BoardSquare> {
     fn clone(&self) -> Self {
         let mut board = Vec::with_capacity(self.height);
         for row in self.board.iter() {
@@ -43,7 +49,7 @@ impl<BoardSquare: Clone> Clone for Board<BoardSquare> {
     }
 }
 
-impl<BoardSquare> Default for Board<BoardSquare> {
+impl Default for Board<BoardSquare> {
     fn default() -> Self {
         Board {
             board: Vec::new(),
@@ -385,4 +391,10 @@ fn handle_input(max_width: usize, max_height: usize) -> Result<(usize, usize), &
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn test_board_initialization() {
+        let board: Board<CellState> = Board::new(10, 10);
+        assert_eq!(board.width, 10);
+        assert_eq!(board.height, 10);
+    }
 }
