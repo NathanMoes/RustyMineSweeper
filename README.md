@@ -6,3 +6,5 @@
 ## top of the board will track the current score and the related 
 ## Initialy the goal is to implement it using commmand line interaction but then to the web as well. 
 ## Aka it will just use html for display of information to make it easier to interact and more appealing
+## Some code of this project was coppied over from the hw3 in Rust programming. Mainly just the board generic type.
+## Much else has been modified and changed as needed
