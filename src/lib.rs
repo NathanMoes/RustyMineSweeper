@@ -4,7 +4,9 @@ use std::fmt;
 use std::marker::PhantomData;
 
 #[derive(Clone, PartialEq, Default)]
-enum CellState {
+/// State for the individual squares. 
+/// Determines if the square is revealed or if it has been flagged/revealed
+enum SquareState {
     #[default]
     Hidden,
     Revealed,
@@ -13,7 +15,7 @@ enum CellState {
 
 #[derive(Clone)]
 pub struct MinesweeperSquare {
-    state: CellState,
+    state: SquareState,
     value: isize,
     is_mine: bool,
 }
@@ -184,7 +186,7 @@ impl Board<MinesweeperSquare> {
             let row = vec![
                 MinesweeperSquare {
                     value: -1,
-                    state: CellState::Hidden,
+                    state: SquareState::Hidden,
                     is_mine: false
                 };
                 width
@@ -240,7 +242,7 @@ impl Board<MinesweeperSquare> {
     fn update_board(&mut self, x: usize, y: usize) {
         // First, update the clicked square itself
         self.board[y][x].value = self.check_square(x, y);
-        self.board[y][x].state = CellState::Revealed;
+        self.board[y][x].state = SquareState::Revealed;
 
         // Then, update each of the eight surrounding squares
         for y_index in y.saturating_sub(1)..=y + 1 {
@@ -283,8 +285,8 @@ impl Board<MinesweeperSquare> {
         while !move_made {
             match handle_input(self.width, self.height) {
                 Ok((row_index, col_index)) => {
-                    if self.board[row_index][col_index].state == CellState::Hidden {
-                        self.board[row_index][col_index].state = CellState::Flagged;
+                    if self.board[row_index][col_index].state == SquareState::Hidden {
+                        self.board[row_index][col_index].state = SquareState::Flagged;
                         move_made = true;
                     } else {
                         println!("Invalid position selection. Please select a non selected square to mark");
@@ -303,7 +305,7 @@ impl Board<MinesweeperSquare> {
     pub fn is_won(&self) -> Option<()> {
         for row in self.board.iter() {
             for square in row.iter() {
-                if square.state != CellState::Flagged && square.is_mine {
+                if square.state != SquareState::Flagged && square.is_mine {
                     return None;
                 }
             }
@@ -340,21 +342,21 @@ impl fmt::Display for Board<MinesweeperSquare> {
 
                 // Display logic based on the state and value of MinesweeperSquare
                 match square.state {
-                    CellState::Hidden => {
+                    SquareState::Hidden => {
                         if square.value != -1 {
                             write!(f, "{}", square.value)?
                         } else {
                             write!(f, "{}", EMPTY_SQUARE)?
                         }
                     }
-                    CellState::Revealed => {
+                    SquareState::Revealed => {
                         if square.is_mine {
                             write!(f, "*")?;
                         } else {
                             write!(f, "{}", square.value)?;
                         }
                     }
-                    CellState::Flagged => write!(f, "{}", MARKED_SQUARE)?,
+                    SquareState::Flagged => write!(f, "{}", MARKED_SQUARE)?,
                 }
             }
             writeln!(f, " |")?;
@@ -391,7 +393,7 @@ mod tests {
     use super::*;
     #[test]
     fn test_board_initialization() {
-        let board: Board<CellState> = Board::new(10, 10);
+        let board: Board<SquareState> = Board::new(10, 10);
         assert_eq!(board.width, 10);
         assert_eq!(board.height, 10);
     }
