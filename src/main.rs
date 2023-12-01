@@ -23,7 +23,7 @@ fn main() {
         break;
     }
     let mut score = 0;
-    let mut board: Board<BoardSquare> = Board::isize_board(width, height);
+    let mut board: Board<MinesweeperSquare> = Board::isize_board(width, height);
     board.place_mines();
     println!("{}", board);
     loop {

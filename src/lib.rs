@@ -3,20 +3,16 @@ use rand::Rng;
 use std::fmt;
 use std::marker::PhantomData;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Default)]
 enum CellState {
+    #[default]
     Hidden,
     Revealed,
     Flagged,
 }
 
-impl Default for CellState{
-    fn default() -> Self {
-        CellState::Hidden
-    }
-}
 #[derive(Clone)]
-pub struct BoardSquare {
+pub struct MinesweeperSquare {
     state: CellState,
     value: isize,
     is_mine: bool,
@@ -25,16 +21,16 @@ pub struct BoardSquare {
 #[derive(Debug)]
 /// Board object for any arbitrary type
 /// Values for the board itself and width + height properties for it's limits
-pub struct Board<BoardSquare> {
-    board: Vec<Vec<BoardSquare>>,
+pub struct Board<MinesweeperSquare> {
+    board: Vec<Vec<MinesweeperSquare>>,
     pub width: usize,
     pub height: usize,
-    _marker: PhantomData<BoardSquare>,
+    _marker: PhantomData<MinesweeperSquare>,
 }
 
 /// Clone implementation for board of arbitrary type.
 /// Essentially it just clones the vec and cop
-impl Clone for Board<BoardSquare> {
+impl Clone for Board<MinesweeperSquare> {
     fn clone(&self) -> Self {
         let mut board = Vec::with_capacity(self.height);
         for row in self.board.iter() {
@@ -49,7 +45,9 @@ impl Clone for Board<BoardSquare> {
     }
 }
 
-impl Default for Board<BoardSquare> {
+/// Default type for the board of type MinesweeperSquare.
+/// used to init a basic and small board that can be used to play minesweeper
+impl Default for Board<MinesweeperSquare> {
     fn default() -> Self {
         Board {
             board: Vec::new(),
@@ -61,9 +59,9 @@ impl Default for Board<BoardSquare> {
 }
 
 /// Default implementation for the Board. Including basic features
-impl<BoardSquare> Board<BoardSquare>
+impl<MinesweeperSquare> Board<MinesweeperSquare>
 where
-BoardSquare: Clone + Default + std::cmp::PartialEq,
+MinesweeperSquare: Clone + Default + std::cmp::PartialEq,
 {
     /// Creates a new Board object with given width and height dimensions with default values for the type
     /// # Examples
@@ -91,12 +89,12 @@ BoardSquare: Clone + Default + std::cmp::PartialEq,
     /// assert_eq!(board.width, width);
     /// assert_eq!(board.height, height);
     /// ```
-    pub fn new(width: usize, height: usize) -> Board<BoardSquare> {
+    pub fn new(width: usize, height: usize) -> Board<MinesweeperSquare> {
         let mut board = Vec::with_capacity(height);
         for _ in 0..height {
             let mut row = Vec::with_capacity(width);
             for _ in 0..width {
-                row.push(BoardSquare::default());
+                row.push(MinesweeperSquare::default());
             }
             board.push(row);
         }
@@ -121,7 +119,7 @@ BoardSquare: Clone + Default + std::cmp::PartialEq,
     /// assert!(board.get(width + 1, 0).is_none());
     /// assert!(board.get(0, height + 1).is_none());
     /// ```
-    pub fn get(&self, x: usize, y: usize) -> Option<&BoardSquare> {
+    pub fn get(&self, x: usize, y: usize) -> Option<&MinesweeperSquare> {
         self.board.get(y).and_then(|row| row.get(x))
     }
 
@@ -143,7 +141,7 @@ BoardSquare: Clone + Default + std::cmp::PartialEq,
     /// board.set(1, 1, value);
     /// assert!(board.get(1, 1) == Some(&value));
     /// ```
-    pub fn set(&mut self, x: usize, y: usize, value: BoardSquare) {
+    pub fn set(&mut self, x: usize, y: usize, value: MinesweeperSquare) {
         if y < self.height && x < self.width {
             self.board[y][x] = value;
         }
@@ -167,24 +165,24 @@ BoardSquare: Clone + Default + std::cmp::PartialEq,
     ///     }
     /// }
     /// ```
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Vec<BoardSquare>> {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Vec<MinesweeperSquare>> {
         self.board.iter_mut()
     }
 }
 
-impl Board<BoardSquare> {
+impl Board<MinesweeperSquare> {
     /// Creates a Board of type isize with default values of -1
     /// # Examples
     /// ```
     /// use rusty_mine_sweeper::Board;
-    /// use rusty_mine_sweeper::BoardSquare;
-    /// let mut board: Board<BoardSquare> = Board::isize_board(5, 4);
+    /// use rusty_mine_sweeper::MinesweeperSquare;
+    /// let mut board: Board<MinesweeperSquare> = Board::isize_board(5, 4);
     /// ```
-    pub fn isize_board(width: usize, height: usize) -> Board<BoardSquare> {
+    pub fn isize_board(width: usize, height: usize) -> Board<MinesweeperSquare> {
         let mut board = Vec::with_capacity(height);
         for _ in 0..height {
             let row = vec![
-                BoardSquare {
+                MinesweeperSquare {
                     value: -1,
                     state: CellState::Hidden,
                     is_mine: false
@@ -319,7 +317,7 @@ const MARKED_SQUARE: char = '\u{1F6A9}';
 
 /// Implementation for fmt::Display for the board
 /// displays the given value for the item in each cord with 0..width and 0..height numbers and letters respectively
-impl fmt::Display for Board<BoardSquare> {
+impl fmt::Display for Board<MinesweeperSquare> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, " ")?;
         for i in 0..self.board[0].len() {
@@ -340,7 +338,7 @@ impl fmt::Display for Board<BoardSquare> {
                     write!(f, " | ")?;
                 }
 
-                // Display logic based on the state and value of BoardSquare
+                // Display logic based on the state and value of MinesweeperSquare
                 match square.state {
                     CellState::Hidden => {
                         if square.value != -1 {
