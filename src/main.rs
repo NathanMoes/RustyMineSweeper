@@ -44,21 +44,19 @@ fn main() {
                     }
                     println!("Board after your mark:\n{}", board);
                 }
-                UserAction::Select => {
-                    match board.make_move() {
-                        Ok(_) => {
-                            score += 1;
-                            println!("Board after your move:\n{}", board);
-                        }
-                        Err(x) => {
-                            if x == "You lose" {
-                                println!("You lose");
-                                break;
-                            }
-                            println!("Invalid move");
-                        }
+                UserAction::Select => match board.make_move() {
+                    Ok(_) => {
+                        score += 1;
+                        println!("Board after your move:\n{}", board);
                     }
-                }
+                    Err(x) => {
+                        if x == "You lose" {
+                            println!("You lose");
+                            break;
+                        }
+                        println!("Invalid move");
+                    }
+                },
             },
             Err(_) => {
                 println!("Invalid choice. Please try again.");

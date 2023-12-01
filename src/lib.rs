@@ -4,7 +4,7 @@ use std::fmt;
 use std::marker::PhantomData;
 
 #[derive(Clone, PartialEq, Default, Copy)]
-/// State for the individual squares. 
+/// State for the individual squares.
 /// Determines if the square is revealed or if it has been flagged/revealed
 enum SquareState {
     #[default]
@@ -22,11 +22,10 @@ pub struct MinesweeperSquare {
     is_mine: bool,
 }
 
-
 impl MinesweeperSquare {
     /// Creates a new MinesweeperSquare with default values
     /// # Examples
-    /// ``` 
+    /// ```
     /// use rusty_mine_sweeper::MinesweeperSquare;
     /// let square: MinesweeperSquare = MinesweeperSquare::new();
     /// ```
@@ -43,26 +42,25 @@ impl MinesweeperSquare {
     /// ```
     /// use rusty_mine_sweeper::MinesweeperSquare;
     /// let square: MinesweeperSquare = MinesweeperSquare::new();
-    /// 
+    ///
     /// assert_eq!(square.get_value(), -1);
     /// ```
-    pub fn get_value(& self) -> isize {
+    pub fn get_value(&self) -> isize {
         self.value
     }
 
     /// Returns a true or false for wether the square contains a mine
-    /// 
-    /// # Examples 
+    ///
+    /// # Examples
     /// ```
     /// use rusty_mine_sweeper::MinesweeperSquare;
     /// let square: MinesweeperSquare = MinesweeperSquare::new();
-    /// 
+    ///
     /// assert_eq!(square.get_is_mine(), false);
     /// ```
-    pub fn get_is_mine(& self) -> bool {
+    pub fn get_is_mine(&self) -> bool {
         self.is_mine
     }
-
 }
 
 #[derive(Debug)]
@@ -108,7 +106,7 @@ impl Default for Board<MinesweeperSquare> {
 /// Default implementation for the Board. Including basic features
 impl<MinesweeperSquare> Board<MinesweeperSquare>
 where
-MinesweeperSquare: Clone + Default + std::cmp::PartialEq,
+    MinesweeperSquare: Clone + Default + std::cmp::PartialEq,
 {
     /// Creates a new Board object with given width and height dimensions with default values for the type
     /// # Examples
@@ -230,7 +228,7 @@ MinesweeperSquare: Clone + Default + std::cmp::PartialEq,
     ///     }
     /// }
     /// ```
-    pub fn iter(& self) -> impl Iterator<Item = & Vec<MinesweeperSquare>> {
+    pub fn iter(&self) -> impl Iterator<Item = &Vec<MinesweeperSquare>> {
         self.board.iter()
     }
 }
@@ -265,17 +263,17 @@ impl Board<MinesweeperSquare> {
     }
 
     /// Randomly places mines (~10% of the squares) on the board
-    /// 
+    ///
     /// # Examples
     /// ```
     /// use rusty_mine_sweeper::Board;
     /// use rusty_mine_sweeper::MinesweeperSquare;
-    /// 
+    ///
     /// let mut board: Board<MinesweeperSquare> = Board::isize_board(10, 10);
     /// let mut count: usize = 0;
-    /// 
+    ///
     /// board.increase_difficulty();
-    /// 
+    ///
     /// for x in board.iter(){
     ///     if x.get_is_mine() == true {
     ///         count += 1;
