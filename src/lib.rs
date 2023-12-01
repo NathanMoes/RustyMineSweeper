@@ -355,7 +355,7 @@ impl Board<MinesweeperSquare> {
                         self.update_board(col_index, row_index);
                         move_made = true;
                     } else {
-                        println!("Invalid position selection. Please select a non selected square to mark");
+                        println!("Invalid position selection. Please select a non selected square");
                         continue;
                     }
                 }
@@ -378,7 +378,7 @@ impl Board<MinesweeperSquare> {
                         self.board[row_index][col_index].state = SquareState::Flagged;
                         move_made = true;
                     } else {
-                        println!("Invalid position selection. Please select a non selected square to mark");
+                        println!("Invalid position selection. Please select a non selected square to mark/flag");
                         continue;
                     }
                 }

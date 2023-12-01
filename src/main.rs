@@ -10,7 +10,7 @@ enum UserAction {
 }
 
 fn main() {
-    println!("Welcome to rusty mine sweeper by Nathan Moes! Please note that all mines MUST be marked as flagged in order to win the game");
+    println!("Welcome to rusty mine sweeper by Nathan Moes! Please note that all mines MUST be marked/flagged in order to win the game");
     let width: usize;
     let height: usize;
     loop {
@@ -37,12 +37,12 @@ fn main() {
                 UserAction::Mark => {
                     loop {
                         if board.mark_square().is_err() {
-                            println!("Invalid square to mark. Please try again.");
+                            println!("Invalid square to mark/flag. Please try again.");
                             continue;
                         }
                         break;
                     }
-                    println!("Board after your mark:\n{}", board);
+                    println!("Board after your mark/flag:\n{}", board);
                 }
                 UserAction::Select => match board.make_move() {
                     Ok(_) => {
