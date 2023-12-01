@@ -351,8 +351,13 @@ impl Board<MinesweeperSquare> {
                     if self.board[row_index][col_index].is_mine {
                         return Err("You lose");
                     }
-                    self.update_board(col_index, row_index);
-                    move_made = true;
+                    if self.board[row_index][col_index].state == SquareState::Hidden {
+                        self.update_board(col_index, row_index);
+                        move_made = true;
+                    } else {
+                        println!("Invalid position selection. Please select a non selected square to mark");
+                        continue;
+                    }
                 }
                 Err(e) => {
                     println!("{}", e);

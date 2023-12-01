@@ -118,3 +118,8 @@ fn get_params() -> Result<(usize, usize), &'static str> {
 
     Ok((width, height))
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+}
