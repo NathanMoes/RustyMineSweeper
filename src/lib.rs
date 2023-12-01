@@ -405,6 +405,7 @@ const MARKED_SQUARE: char = '\u{1F6A9}';
 /// Implementation for fmt::Display for the board
 /// displays the given value for the item in each cord with 0..width and 0..height numbers and letters respectively
 impl fmt::Display for Board<MinesweeperSquare> {
+    /// fmt function that reflects the debug print. Allows for printing in a human understandable way
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, " ")?;
         for i in 0..self.board[0].len() {
