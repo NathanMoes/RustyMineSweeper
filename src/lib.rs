@@ -3,7 +3,7 @@ use rand::Rng;
 use std::fmt;
 use std::marker::PhantomData;
 
-#[derive(Clone, PartialEq, Default)]
+#[derive(Clone, PartialEq, Default, Copy)]
 /// State for the individual squares. 
 /// Determines if the square is revealed or if it has been flagged/revealed
 enum SquareState {
@@ -13,13 +13,56 @@ enum SquareState {
     Flagged,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy, Default, PartialEq)]
 /// Struct for defining the square on a minesweeper board.
 /// has a state reflecting its state, value reflecting custom value of the square (future use or customization for display) and a boolean to represent if the square contains a mine or is a mine
 pub struct MinesweeperSquare {
     state: SquareState,
     value: isize,
     is_mine: bool,
+}
+
+
+impl MinesweeperSquare {
+    /// Creates a new MinesweeperSquare with default values
+    /// # Examples
+    /// ``` 
+    /// use rusty_mine_sweeper::MinesweeperSquare;
+    /// let square: MinesweeperSquare = MinesweeperSquare::new();
+    /// ```
+    pub fn new() -> MinesweeperSquare {
+        MinesweeperSquare {
+            state: SquareState::Hidden,
+            value: -1,
+            is_mine: false,
+        }
+    }
+
+    /// Returns the value (isize) for the square
+    /// # Examples
+    /// ```
+    /// use rusty_mine_sweeper::MinesweeperSquare;
+    /// let square: MinesweeperSquare = MinesweeperSquare::new();
+    /// 
+    /// assert_eq!(square.get_value(), -1);
+    /// ```
+    pub fn get_value(& self) -> isize {
+        self.value
+    }
+
+    /// Returns a true or false for wether the square contains a mine
+    /// 
+    /// # Examples 
+    /// ```
+    /// use rusty_mine_sweeper::MinesweeperSquare;
+    /// let square: MinesweeperSquare = MinesweeperSquare::new();
+    /// 
+    /// assert_eq!(square.get_is_mine(), false);
+    /// ```
+    pub fn get_is_mine(& self) -> bool {
+        self.is_mine
+    }
+
 }
 
 #[derive(Debug)]
@@ -172,6 +215,24 @@ MinesweeperSquare: Clone + Default + std::cmp::PartialEq,
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Vec<MinesweeperSquare>> {
         self.board.iter_mut()
     }
+
+    /// Creates a Iterator that gives a reference to the values on the board
+    /// # Examples
+    /// ```
+    /// use rusty_mine_sweeper::Board;
+    /// use rusty_mine_sweeper::MinesweeperSquare;
+    /// let width = 4;
+    /// let height = 3;
+    /// let mut board: Board<MinesweeperSquare> = Board::isize_board(10, 10);
+    /// for mut row in board.iter() {
+    ///     for element in row.iter() {
+    ///         assert_eq!(element.get_value(), -1)
+    ///     }
+    /// }
+    /// ```
+    pub fn iter(& self) -> impl Iterator<Item = & Vec<MinesweeperSquare>> {
+        self.board.iter()
+    }
 }
 
 impl Board<MinesweeperSquare> {
@@ -204,7 +265,25 @@ impl Board<MinesweeperSquare> {
     }
 
     /// Randomly places mines (~10% of the squares) on the board
-    pub fn place_mines(&mut self) {
+    /// 
+    /// # Examples
+    /// ```
+    /// use rusty_mine_sweeper::Board;
+    /// use rusty_mine_sweeper::MinesweeperSquare;
+    /// 
+    /// let mut board: Board<MinesweeperSquare> = Board::isize_board(10, 10);
+    /// let mut count: usize = 0;
+    /// 
+    /// board.increase_difficulty();
+    /// 
+    /// for x in board.iter(){
+    ///     if x.get_is_mine() == true {
+    ///         count += 1;
+    ///     }
+    /// }
+    /// assert_eq!(count, 10);
+    /// ```
+    pub fn increase_difficulty(&mut self) {
         let total_squares = self.width * self.height;
         let mines_count = total_squares / 10; // Approximately 10% of total squares
 

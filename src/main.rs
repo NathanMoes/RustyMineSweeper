@@ -24,7 +24,7 @@ fn main() {
     }
     let mut score = 0;
     let mut board: Board<MinesweeperSquare> = Board::isize_board(width, height);
-    board.place_mines();
+    board.increase_difficulty();
     println!("{}", board);
     loop {
         if board.is_won().is_some() {
