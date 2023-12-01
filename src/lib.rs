@@ -274,9 +274,11 @@ impl Board<MinesweeperSquare> {
     ///
     /// board.increase_difficulty();
     ///
-    /// for x in board.iter(){
-    ///     if x.get_is_mine() == true {
-    ///         count += 1;
+    /// for row in board.iter() {
+    ///     for x in row.iter() {
+    ///         if x.get_is_mine() == true {
+    ///             count += 1;
+    ///         }
     ///     }
     /// }
     /// assert_eq!(count, 10);
