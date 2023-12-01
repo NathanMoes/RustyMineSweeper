@@ -14,6 +14,8 @@ enum SquareState {
 }
 
 #[derive(Clone)]
+/// Struct for defining the square on a minesweeper board.
+/// has a state reflecting its state, value reflecting custom value of the square (future use or customization for display) and a boolean to represent if the square contains a mine or is a mine
 pub struct MinesweeperSquare {
     state: SquareState,
     value: isize,
