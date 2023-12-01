@@ -320,6 +320,8 @@ impl Board<MinesweeperSquare> {
         count
     }
 
+    /// updates the board state given a (x, y) cords. This involves updating the square itself as revealed
+    /// then updating its mine proximity count
     fn update_board(&mut self, x: usize, y: usize) {
         // First, update the clicked square itself
         self.board[y][x].value = self.check_square(x, y);
@@ -361,6 +363,7 @@ impl Board<MinesweeperSquare> {
         Ok((0, 0))
     }
 
+    /// Handles marking a square as flagged. If invalid square gotten from user input is not able to be marked it will alert the user. Returning a result Ok() if successful.
     pub fn mark_square(&mut self) -> Result<(), &'static str> {
         let mut move_made = false;
         while !move_made {
@@ -383,6 +386,7 @@ impl Board<MinesweeperSquare> {
         Ok(())
     }
 
+    /// returns Some(()) if the board state is won. Used to terminate the game
     pub fn is_won(&self) -> Option<()> {
         for row in self.board.iter() {
             for square in row.iter() {
