@@ -24,7 +24,11 @@ fn main() {
     }
     let mut score = 0;
     let mut board: Board<MinesweeperSquare> = Board::isize_board(width, height);
-    board.increase_difficulty();
+    if let Ok(x) = get_user_difficulty_level() {
+        for _ in 0..x {
+            board.increase_difficulty();
+        }
+    }
     println!("{}", board);
     loop {
         if board.is_won().is_some() {
@@ -75,6 +79,28 @@ fn get_user_action() -> Result<UserAction, &'static str> {
             "2" => return Ok(UserAction::Select),
             _ => {
                 println!("Invalid input. Please enter 1 or 2.");
+                continue;
+            }
+        }
+    }
+}
+
+fn get_user_difficulty_level() -> Result<usize, &'static str> {
+    loop {
+        let action =
+            input!("Select a difficulty level, up to 9. Each level = 10% more mines on board\n");
+        match action.trim() {
+            "1" => return Ok(1),
+            "2" => return Ok(2),
+            "3" => return Ok(3),
+            "4" => return Ok(4),
+            "5" => return Ok(5),
+            "6" => return Ok(6),
+            "7" => return Ok(7),
+            "8" => return Ok(8),
+            "9" => return Ok(9),
+            _ => {
+                println!("Invalid input. Please enter 1..9.");
                 continue;
             }
         }
